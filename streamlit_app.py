@@ -1,5 +1,6 @@
 import os
 import pinecone
+from PIL import Image
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 
@@ -41,7 +42,12 @@ def query_index(query, episode_title=None, num_results=5):
 
 st.title("Office Ladies Podcast Search")
 
-query = st.text_input('Enter your search query:', placeholder='Search for an answer in the podcast transcripts', label_visibility='hidden')
+image = Image.open('office-ladies-podcast-image.jpeg')
+st.image(image)
+
+st.text("By Shubham Pawar")
+
+query = st.text_input('Enter your search query:', placeholder='Search for a phrase or an answer in the podcast transcripts', label_visibility='hidden')
 
 if st.button('Search', type='primary'):
     results = query_index(query)
