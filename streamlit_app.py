@@ -89,7 +89,7 @@ if st.button('Search', type='primary'):
     prompt = format_prompt(results, query)
     
     response = get_model_response(prompt)
-    st.markdown(f":red[{response}]")
+    st.markdown(f":green[{response}]")
     
     for episode_number, episode_title, text in results:
         st.subheader(f":blue[{episode_number}: {episode_title}]")
