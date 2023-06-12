@@ -1,13 +1,15 @@
 import os
+import openai
 import pinecone
 from PIL import Image
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 
 
-PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY')
 INDEX_NAME = "shubhams-index"
 MODEL_NAME = "multi-qa-MiniLM-L6-cos-v1"
+
+DEFAULT_PROMPT = [{"role": "user", "content": "Use the following context to answer the user query. If the user query is a question, provide an answer using the context. If the user query is a statement or a phrase, provide the best response using the context.\n\nContext:\n\n[CONTEXT]\n\nQuery: [QUERY]\n\nResponse:"}]
 
 @st.cache_resource
 def init_pinecone():
@@ -15,6 +17,10 @@ def init_pinecone():
         api_key=st.secrets["PINECONE_API_KEY"],
         environment="us-west4-gcp"
     )
+
+@st.cache_resource
+def init_openai():
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 @st.cache_resource
 def load_model(model_name):
@@ -40,6 +46,34 @@ def query_index(query, episode_title=None, num_results=5):
         match['metadata']['text']
     ) for match in results['matches']]
 
+@st.cache_data
+def format_prompt(results, query):
+    context = ""
+    for episode_number, episode_title, text in results:
+        context += f"{episode_number} ({episode_title}): {text}\n\n"
+
+    prompt = [message.copy() for message in DEFAULT_PROMPT]
+    prompt[-1]["content"] = prompt[-1]["content"].replace("[CONTEXT]", context)
+    prompt[-1]["content"] = prompt[-1]["content"].replace("[QUERY]", query)
+
+    return prompt
+
+@st.cache_data
+def get_model_response(prompt):
+    init_openai()
+
+    response = openai.ChatCompletion.create(
+        model='gpt-3.5-turbo', 
+        messages=prompt, 
+        temperature=0.7,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    
+    return response['choices'][0]['message']['content'].strip()
+
 st.title("Office Ladies Podcast Search")
 
 image = Image.open('office-ladies-podcast-image.jpeg')
@@ -51,6 +85,11 @@ query = st.text_input('Enter your search query:', placeholder='Search for a phra
 
 if st.button('Search', type='primary'):
     results = query_index(query)
+
+    prompt = format_prompt(results, query)
+    
+    response = get_model_response(prompt)
+    st.markdown(f":red[{response}]")
     
     for episode_number, episode_title, text in results:
         st.subheader(f":blue[{episode_number}: {episode_title}]")
