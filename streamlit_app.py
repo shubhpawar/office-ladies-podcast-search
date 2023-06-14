@@ -79,7 +79,7 @@ st.title("Office Ladies Podcast Search")
 image = Image.open('office-ladies-podcast-image.jpeg')
 st.image(image)
 
-st.text("By Shubham Pawar")
+st.markdown('<p style="text-align: left;">By Shubham Pawar<span style="float:right;"><a href="https://medium.com/@pawarshubham28794/searching-for-more-enhancing-the-office-ladies-podcast-with-semantic-search-14d914e04b5d">How was this app made?</a></span></p>', unsafe_allow_html=True)
 
 query = st.text_input('Enter your search query:', placeholder='Search for a phrase or an answer in the podcast transcripts', label_visibility='hidden')
 
